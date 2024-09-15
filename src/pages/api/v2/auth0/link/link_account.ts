@@ -34,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: '[backend]: linkAccountResponse Network response was not ok' });
     }
     console.log('backend success, linkAccountResponse', linkAccountResponse)
+    // TODO: discord_idをmetadataに追加する. 検索に必要
 
     // res.status(200).json({ linkAccountResponse });
     res.status(200).json({ message: 'helloworld' });
