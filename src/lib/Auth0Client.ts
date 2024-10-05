@@ -10,6 +10,10 @@ export async function submitPostRequest<B>(path: string, headers: Record<string,
   return submitRequest('POST', path, headers, body, query, timeoutMs)
 }
 
+export async function submitPatchRequest<B>(paht: string, headers: Record<string, string>, body: B, query?: Record<string, string>, timeoutMs?: number) {
+  return submitRequest('PATCH', paht, headers, body, query, timeoutMs)
+}
+
 async function submitRequest<B>(
   method: string,
   path: string,
@@ -41,8 +45,17 @@ async function submitRequest<B>(
   }
 
   const response = await withTimeout(fetch(apiUrl.toString(), init), timeoutMs)
-  const json = await response.json()
-  return json
+  const responseText = await response.text();
+  try{
+    const json = JSON.parse(responseText)
+    console.log('--------result is json--------')
+    console.log(json)
+    return json
+  }catch(e){
+    console.log('--------result is not json--------')
+    console.log(responseText)
+    return responseText
+  }
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {

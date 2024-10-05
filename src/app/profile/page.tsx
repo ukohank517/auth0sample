@@ -7,10 +7,11 @@ import Loading from '@/components/parts/Loading';
 import { useUser, withPageAuthRequired } from '@auth0/nextjs-auth0/client';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { handleLogout } from '@auth0/nextjs-auth0';
 
 function Profile() {
   const { user, isLoading } = useUser();
-  const [authUrl, setAuthUrl] = useState<string>('');
+  const [ authUrl, setAuthUrl ] = useState<string>('');
 
   useEffect(() => {
     fetch('http://localhost:3000/api/v2/auth0/link/authorize_url')
@@ -27,24 +28,48 @@ function Profile() {
     })
   }, []);
 
-  // const domain = 'https://dev-pze81xi6nzpfviz1.us.auth0.com';
-
-  // const data: Record<string, string> = {
-  //   prompt: 'login', // 既存の認証情報を無視して再度認証処理を行う
-  //   response_type: 'code',
-  //   client_id: 'aGq47dREKroosw7Q5tJUFtby2t9yIV4y',
-  //   redirect_uri: 'http://localhost:3000/api/auth/link/callback', // ローカルのテスト用に
-  //   audience: 'https://dev-pze81xi6nzpfviz1.us.auth0.com/api/v2/',
-  //   code_challenge: 'd5sBYVQMjQ2VDvKYlO0Y_2zvvA_ZwSMm9TEp6mRh31o', // hello.ts で生成した値、テストのため固定
-  //   // verifier: 'TJh6gqs99c6FCQ3NdfDYE7Umk1BysyH1mm-RrcTKJ5A', // challengeのペア、テストのため固定
-  //   code_challenge_method: 'S256',
-  //   scope: 'openid profile email appointments contacts',
-  //   state: 'xyzABC123'
-  // }
 
   const linkButtonClick = () => {
     // 遷移して認証処理を行う
     window.location.href = authUrl;
+  }
+
+  const [newPassword, setNewPassword] = useState(''); // 新しいパスワード
+  const [resetResult, setResetResult] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  const resetPassword = async () => {
+    fetch('http://localhost:3000/api/v2/auth0/password_reset/set_new_password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: user?.sub,
+        newPassword: newPassword,
+      }),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    }).then(data => {
+      console.log('data', data.updated_at);
+      // 成功時処理
+      setResetResult('更新日時:' + data.updated_at);
+      setResetSuccess(true);
+    }).catch(error => {
+      console.error('There has been a problem with your fetch operation:', error
+      );
+    })
+
+    for(let i = 5; i >= 0; i--){
+      // 1秒待つ
+      await new Promise(r => setTimeout(r, 1000));
+      console.log(i, '...')
+    }
+    console.log('log out')
+    window.location.href = 'http://localhost:3000/api/auth/logout';
   }
 
   return (
@@ -78,6 +103,14 @@ function Profile() {
               アカウントリンク
             </Button>
           </Row>
+
+          <p>--------------------------------------------------------------------------------</p>
+          <h2>パスワードリセット</h2>
+          <Row>
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <button onClick={resetPassword}>パスワードリセット</button>
+          </Row>
+          <label>リセット結果: {resetResult}</label>
         </>
       )}
     </>

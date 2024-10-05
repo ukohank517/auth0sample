@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+// ref: https://auth0.com/docs/api/authentication#authorization-code-flow
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if(req.method === 'GET') {
     const domain = process.env.AUTH0_ISSUER_BASE_URL;
@@ -8,6 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       prompt: 'login', // 既存の認証情報を無視して再度認証処理を行う
       response_type: 'code',
       client_id: process.env.AUTH0_CLIENT_ID as string,
+      // callback:
+      // http://localhost:3000/api/auth/link/callback
       redirect_uri: process.env.AUTH0_CALLBACK_URL as string,
       audience: process.env.AUTH0_AUDIENCE as string,
       code_challenge: process.env.AUTH0_CODE_CHALLENGE as string,

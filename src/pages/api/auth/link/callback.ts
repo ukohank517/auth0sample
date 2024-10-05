@@ -2,6 +2,7 @@ import { getAccessToken } from '@auth0/nextjs-auth0';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parse } from 'url';
 
+// link account callback
 export default async function page(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     // プライマリアカウント
