@@ -6,12 +6,30 @@ import ErrorMessage from '@/components/parts/ErrorMessage';
 import Loading from '@/components/parts/Loading';
 import { useUser, withPageAuthRequired } from '@auth0/nextjs-auth0/client';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { handleLogout } from '@auth0/nextjs-auth0';
+import ProfileServer from '@/components/ProfileServer';
 
 function Profile() {
   const { user, isLoading } = useUser();
   const [ authUrl, setAuthUrl ] = useState<string>('');
+  const [ accountStatus, setAccountStatus ] = useState<string>('');
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/v2/auth0/check_status')
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    }).then(data => {
+      console.log('data', data);
+      setAccountStatus(data.status);
+    }).catch(error => {
+      console.error('There has been a problem with your fetch operation:', error);
+    })
+  },[]);
+
 
   useEffect(() => {
     fetch('http://localhost:3000/api/v2/auth0/link/authorize_url')
@@ -36,7 +54,6 @@ function Profile() {
 
   const [newPassword, setNewPassword] = useState(''); // 新しいパスワード
   const [resetResult, setResetResult] = useState('');
-  const [resetSuccess, setResetSuccess] = useState(false);
 
   const resetPassword = async () => {
     fetch('http://localhost:3000/api/v2/auth0/password_reset/set_new_password', {
@@ -57,7 +74,6 @@ function Profile() {
       console.log('data', data.updated_at);
       // 成功時処理
       setResetResult('更新日時:' + data.updated_at);
-      setResetSuccess(true);
     }).catch(error => {
       console.error('There has been a problem with your fetch operation:', error
       );
@@ -71,6 +87,70 @@ function Profile() {
     console.log('log out')
     window.location.href = 'http://localhost:3000/api/auth/logout';
   }
+
+  const [oldMail, setOldMail] = useState(''); // 古いメールアドレス
+  const [newMail, setNewMail] = useState(''); // 新しいメールアドレス
+  const [oldOtp, setOldOtp] = useState(''); // 古いメールアドレスのOTP
+  const [newOtp, setNewOtp] = useState(''); // 新しいメールアドレスのOTP
+  const [changeMailResult, setChangeMailResult] = useState('');
+
+  const onStartMailChange = async () => {
+    setOldMail(user?.email || '');
+
+    fetch('http://localhost:3000/api/v2/auth0/email_change/send_otp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oldMail: oldMail,
+        newMail: newMail,
+      }),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    }).then(data => {
+      console.log('OTP送信完了しました');
+      console.log('data', data);
+      // 成功時処理
+      setChangeMailResult(data.message);
+    }).catch(error => {
+      console.error('There has been a problem with your fetch operation:', error
+      );
+    })
+  }
+  const onVerifyOtp = async () => {
+    console.log('とりあえず真アカウントのチェックを行う')
+    console.log('newMail', newMail);
+    console.log('newOtp', newOtp);
+    fetch('http://localhost:3000/api/v2/auth0/email_change/check_status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mail: newMail,
+        otpCode: newOtp,
+      }),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    }).then(data => {
+      console.log('OTP確認完了しました');
+      console.log('data', data);
+      // 成功時処理
+      setChangeMailResult(data.message);
+    }).catch(error => {
+      console.error('There has been a problem with your fetch operation:', error
+      );
+    })
+
+  }
+
 
   return (
     <>
@@ -103,6 +183,18 @@ function Profile() {
               アカウントリンク
             </Button>
           </Row>
+          <p>--------------------------------------</p>
+          <h2> メールアドレス変更 </h2>
+
+          <Row>
+            <input type="email" value={newMail} placeholder='new mail' onChange={(e) => setNewMail(e.target.value)} />
+            <button onClick={onStartMailChange}>メールアドレス変更開始</button>
+          </Row>
+
+          <Row> <label>OLD[{oldMail}]: </label> <input type = "text" value={oldOtp} onChange={(e) => setOldOtp(e.target.value)} /></Row>
+          <Row> <label>NEW[{newMail}]: </label> <input type = "text" value={newOtp} onChange={(e) => setNewOtp(e.target.value)} /></Row>
+          <Row> <button onClick={onVerifyOtp}>OTP確認</button> </Row>
+          <Row> <label>変更結果: {changeMailResult}</label> </Row>
 
           <p>--------------------------------------------------------------------------------</p>
           <h2>パスワードリセット</h2>
