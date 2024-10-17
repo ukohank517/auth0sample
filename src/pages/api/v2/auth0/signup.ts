@@ -13,29 +13,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { email, password } = req.body;
     console.log('server side signup', email, password);
 
+    const account_response = await create_account(email, password);
 
-    const path = `/api/v2/users`;
-    const headers: Record<string, string> = {
-      'content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${process.env.AUTH0_MANAGEMENT_API_TOKEN}`,
-    }
-    const body = {
-      email: email,
-      blocked: false,
-      name: email.split('@')[0], // emailの@より前をnameとして登録
-      password: password,
-      connection: 'Username-Password-Authentication',
-      email_verified: false, // メール認証がまだされていない
-      verify_email: true, // 認証メールを送信する
-    }
 
-    const response = await submitPostRequest(path, headers, body)
-    console.log('signup response', response);
-
-    res.status(200).json(response);
+    res.status(200).json(account_response);
   } else {
     res.setHeader('Allow', ['POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
+
+async function create_account(email: string, password: string){
+  const path = `/api/v2/users`;
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${process.env.AUTH0_MANAGEMENT_API_TOKEN}`,
+  }
+  const body = {
+    email: email,
+    blocked: false,
+    name: email.split('@')[0], // emailの@より前をnameとして登録
+    password: password,
+    connection: 'Username-Password-Authentication',
+    email_verified: false, // メール認証がまだされていない
+    verify_email: true, // 認証メールを送信する
+  }
+
+  const response = await submitPostRequest(path, headers, body)
+  return response;
+}
+
+async function send_verifymail(email: string){
+
+}
+

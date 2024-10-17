@@ -131,8 +131,10 @@ function Profile() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        mail: newMail,
-        otpCode: newOtp,
+        oldMail: oldMail,
+        newMail: newMail,
+        oldOtp: oldOtp,
+        newOtp: newOtp,
       }),
     }).then(res => {
       if (!res.ok) {

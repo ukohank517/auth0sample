@@ -10,6 +10,10 @@ export async function submitPostRequest<B>(path: string, headers: Record<string,
   return submitRequest('POST', path, headers, body, query, timeoutMs)
 }
 
+export async function submitDeleteRequest<B>(path: string, headers: Record<string, string>, body: B, query?: Record<string, string>, timeoutMs?: number) {
+  return submitRequest('DELETE', path, headers, null, query, timeoutMs)
+}
+
 export async function submitPatchRequest<B>(paht: string, headers: Record<string, string>, body: B, query?: Record<string, string>, timeoutMs?: number) {
   return submitRequest('PATCH', paht, headers, body, query, timeoutMs)
 }
@@ -46,6 +50,7 @@ async function submitRequest<B>(
 
   const response = await withTimeout(fetch(apiUrl.toString(), init), timeoutMs)
   const responseText = await response.text();
+  console.log('### call url', apiUrl.toString())
   try{
     const json = JSON.parse(responseText)
     console.log('--------result is json--------')

@@ -1,37 +1,40 @@
-import { submitPostRequest } from '@/lib/Auth0Client';
+import { submitDeleteRequest, submitGetRequest, submitPatchRequest, submitPostRequest } from '@/lib/Auth0Client';
+import { changeMail, deleteMail, getIdTokenByOtpCode } from '@/lib/Auth0Management';
+import { getUserIdFromIdToken } from '@/lib/jwtHelper';
 import { getSession } from '@auth0/nextjs-auth0';
-import { request } from 'http';
+import { time } from 'console';
+import { get, request } from 'http';
+import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { headers } from 'next/headers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const {mail, otpCode} = req.body;
+    const nowusersession = await getSession(req, res) as JwtPayload;
+    const nowuserid = nowusersession.user.sub.toString();
 
-    const path = `/oauth/token`
-    const headers: Record<string, string> = {
-      'content-type': 'application/json',
-    }
-    const body = {
-      grant_type: 'http://auth0.com/oauth/grant-type/passwordless/otp',
-      client_id: process.env.AUTH0_CLIENT_ID,
-      client_secret: process.env.AUTH0_CLIENT_SECRET,
-      username: mail,
-      realm: 'email',
-      otp: otpCode,
-    }
+    const {oldMail, newMail, oldOtp, newOtp} = req.body;
 
-    const response = await submitPostRequest(path, headers, body);
+    // const oldIdToken: string = await getIdToken(oldMail, oldOtp);
+    const newIdToken: string = await getIdTokenByOtpCode(newMail, newOtp);
 
-    if(response.error) {
-      res.status(400).json({
-        message: response.error_description,
-        response: response
+    if(!newIdToken){
+      res.status(200).json({
+        message: 'failed get token!, means otp is invalid' ,
       });
     }
 
+    // const oldUserId = await getUserIdFromIdToken(oldIdToken);
+    const newUserId = await getUserIdFromIdToken(newIdToken) || '';
+
+    // delete new mail;
+    await deleteMail(newUserId);
+
+    // change mail;
+    await changeMail(nowuserid, newMail);
+
     res.status(200).json({
       message: 'success get token!' ,
-      response: response
     });
   } else {
     res.setHeader('Allow', ['POST']);
@@ -39,23 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// MFA登録
-// https://auth0.com/docs/api/authentication?http#add-an-authenticator
-// https://auth0.com/docs/api/authentication?http#verify-with-one-time-password-otp-
-// https://auth0.com/docs/api/authentication?http#verify-with-out-of-band-oob-
-
-
-//
-
-// curl --request POST \
-//   --url 'https://jinja-dev.us.auth0.com/mfa/challeng' \
-//   --header 'content-type: application/json' \
-//   -- data '{""}'
 
 
 
-// curl --request POST \
-//   --url 'https://jinja-dev.us.auth0.com/mfa/associate' \
-//   --header 'authorization: Bearer ACCESS_TOKEN or MFA_TOKEN' \
-//   --header 'content-type: application/json' \
-//   --data '{"client_id": "27dKrDgzhSGiYCLXr8F2g6TIEUqTDugO", "client_secret": "YOUR_CLIENT_SECRET", "authenticator_types":["oob"], "oob_channels":"sms", "phone_number": "+1 555 123456"}'
+
+
