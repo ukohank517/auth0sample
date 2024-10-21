@@ -33,7 +33,7 @@ const NavBar = () => {
           <Collapse isOpen={isOpen} navbar>
             <Nav className="mr-auto" navbar data-testid="navbar-items">
               <NavItem>
-                <PageLink href="/" className="nav-link" testId="navbar-home">
+                <PageLink href="/home" className="nav-link" testId="navbar-home">
                   Home
                 </PageLink>
               </NavItem>
@@ -86,7 +86,7 @@ const NavBar = () => {
                       {user.name}
                     </DropdownItem>
                     <DropdownItem className="dropdown-profile" tag="span">
-                      <PageLink href="/profile" icon="user" testId="navbar-profile-desktop">
+                      <PageLink href="/" icon="user" testId="navbar-profile-desktop">
                         Profile
                       </PageLink>
                     </DropdownItem>

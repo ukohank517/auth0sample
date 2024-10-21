@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useUser, withPageAuthRequired } from '@auth0/nextjs-auth0/client';
+import customAuthCheck from '@/middleware/custom_auth/customAuthCheck';
 
-export default withPageAuthRequired(function CSRPage() {
+export default customAuthCheck(function CSRPage() {
   const {user} = useUser();
   console.log('クライアント側でのレンダリングページからのログインユーザー情報：');
   console.log(user);

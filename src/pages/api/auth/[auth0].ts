@@ -1,6 +1,19 @@
-import { handleAuth } from '@auth0/nextjs-auth0';
+import { handleAuth, handleLogout } from '@auth0/nextjs-auth0';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export default handleAuth();
+export default handleAuth({
+  logout: async (req: NextApiRequest, res: NextApiResponse) => {
+    const returnTo = req.query.returnTo as string;
+    console.log('logout', returnTo);
+
+    await handleLogout(req, res, {
+      returnTo: returnTo,
+      logoutParams: {
+        federated: true, // SSOセッションも削除する
+      }
+    });
+  }
+});
 
 /**
  * この書き方で、以下のルートが作成される
